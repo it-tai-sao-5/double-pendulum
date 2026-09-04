@@ -5,147 +5,179 @@ const ctx = canvas.getContext("2d");
 canvas.width = 800;
 canvas.height = 600;
 
-const g = 9.81;
+const gravity = 9.81;
 
-let m1 = 1;
-let m2 = 1;
+const m1 = 1;
+const m2 = 1;
 
-let l1 = 150;
-let l2 = 150;
+const l1 = 150;
+const l2 = 150;
 
-let a1;
-let a2;
+let angle1;
+let angle2;
 
-let a1_v = 0;
-let a2_v = 0;
+let velocity1 = 0;
+let velocity2 = 0;
+
+let trail = [];
 
 let lastTime = performance.now();
 
-const trail = [];
-
 function reset() {
-    a1 = Number(document.getElementById("angle1").value) * Math.PI / 180;
-    a2 = Number(document.getElementById("angle2").value) * Math.PI / 180;
+    angle1 =
+        Number(document.getElementById("angle1").value)
+        * Math.PI / 180;
 
-    a1_v = 0;
-    a2_v = 0;
+    angle2 =
+        Number(document.getElementById("angle2").value)
+        * Math.PI / 180;
 
-    trail.length = 0;
+    velocity1 = 0;
+    velocity2 = 0;
+
+    trail = [];
 }
 
-function physics(dt) {
-    const num1 = -g * (2 * m1 + m2) * Math.sin(a1);
-    const num2 = -m2 * g * Math.sin(a1 - 2 * a2);
-    const num3 = -2 * Math.sin(a1 - a2) * m2;
+function update(dt) {
+    const difference = angle1 - angle2;
 
-    const den1 = l1 * (2 * m1 + m2 - m2 * Math.cos(2 * a1 - 2 * a2));
+    const denominator1 =
+        l1 * (
+            2 * m1 +
+            m2 -
+            m2 * Math.cos(2 * angle1 - 2 * angle2)
+        );
 
-    const a1_acc =
-        (num1 + num2 + num3 *
-        (a2_v * a2_v * l2 +
-        a1_v * a1_v * l1 * Math.cos(a1 - a2)))
-        / den1;
+    const acceleration1 =
+        (
+            -gravity * (2 * m1 + m2) * Math.sin(angle1)
+            -m2 * gravity * Math.sin(angle1 - 2 * angle2)
+            -2 * Math.sin(difference) * m2 *
+            (
+                velocity2 * velocity2 * l2 +
+                velocity1 * velocity1 * l1 *
+                Math.cos(difference)
+            )
+        ) / denominator1;
 
-    const num4 = 2 * Math.sin(a1 - a2);
+    const denominator2 =
+        l2 * (
+            2 * m1 +
+            m2 -
+            m2 * Math.cos(2 * angle1 - 2 * angle2)
+        );
 
-    const num5 = a1_v * a1_v * l1 * (m1 + m2);
+    const acceleration2 =
+        (
+            2 * Math.sin(difference) *
+            (
+                velocity1 * velocity1 * l1 * (m1 + m2)
+                + gravity * (m1 + m2) * Math.cos(angle1)
+                + velocity2 * velocity2 * l2 * m2 *
+                Math.cos(difference)
+            )
+        ) / denominator2;
 
-    const num6 = g * (m1 + m2) * Math.cos(a1);
+    velocity1 += acceleration1 * dt;
+    velocity2 += acceleration2 * dt;
 
-    const num7 = a2_v * a2_v * l2 * m2 * Math.cos(a1 - a2);
-
-    const den2 = l2 * (2 * m1 + m2 -
-        m2 * Math.cos(2 * a1 - 2 * a2));
-
-    const a2_acc =
-        num4 * (num5 + num6 + num7) / den2;
-
-    a1_v += a1_acc * dt;
-    a2_v += a2_acc * dt;
-
-    a1 += a1_v * dt;
-    a2 += a2_v * dt;
+    angle1 += velocity1 * dt;
+    angle2 += velocity2 * dt;
 }
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const originX = canvas.width / 2;
-    const originY = 150;
+    const originY = 100;
 
-    const x1 = originX + l1 * Math.sin(a1);
-    const y1 = originY + l1 * Math.cos(a1);
+    const x1 =
+        originX + l1 * Math.sin(angle1);
 
-    const x2 = x1 + l2 * Math.sin(a2);
-    const y2 = y1 + l2 * Math.cos(a2);
+    const y1 =
+        originY + l1 * Math.cos(angle1);
 
-    // Trail
-    trail.push({ x: x2, y: y2 });
+    const x2 =
+        x1 + l2 * Math.sin(angle2);
 
-    if (trail.length > 1500) {
+    const y2 =
+        y1 + l2 * Math.cos(angle2);
+
+    // Quỹ đạo
+    trail.push({
+        x: x2,
+        y: y2
+    });
+
+    if (trail.length > 1200) {
         trail.shift();
     }
 
     ctx.beginPath();
 
     for (let i = 0; i < trail.length; i++) {
-        const p = trail[i];
-
         if (i === 0) {
-            ctx.moveTo(p.x, p.y);
+            ctx.moveTo(trail[i].x, trail[i].y);
         } else {
-            ctx.lineTo(p.x, p.y);
+            ctx.lineTo(trail[i].x, trail[i].y);
         }
     }
 
-    ctx.strokeStyle = "#777";
+    ctx.strokeStyle = "#999";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Rods
+    // Thanh 1 + thanh 2
     ctx.beginPath();
     ctx.moveTo(originX, originY);
     ctx.lineTo(x1, y1);
     ctx.lineTo(x2, y2);
 
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 4;
     ctx.stroke();
 
-    // First mass
+    // Điểm treo
     ctx.beginPath();
-    ctx.arc(x1, y1, 12, 0, Math.PI * 2);
+    ctx.arc(originX, originY, 7, 0, Math.PI * 2);
 
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "#222";
     ctx.fill();
 
-    // Second mass
+    // Quả 1
     ctx.beginPath();
-    ctx.arc(x2, y2, 15, 0, Math.PI * 2);
+    ctx.arc(x1, y1, 15, 0, Math.PI * 2);
 
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "#444";
     ctx.fill();
 
-    // Pivot
+    // Quả 2
     ctx.beginPath();
-    ctx.arc(originX, originY, 6, 0, Math.PI * 2);
+    ctx.arc(x2, y2, 18, 0, Math.PI * 2);
 
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "#111";
     ctx.fill();
 }
 
 function animate(time) {
-    const dt = Math.min((time - lastTime) / 1000, 0.02);
+    let dt = (time - lastTime) / 1000;
+
     lastTime = time;
 
-    physics(dt);
+    // Tránh nhảy vật lý nếu tab bị lag
+    dt = Math.min(dt, 0.02);
+
+    update(dt);
     draw();
 
     requestAnimationFrame(animate);
 }
 
-document.getElementById("reset").addEventListener("click", reset);
+document
+    .getElementById("reset")
+    .addEventListener("click", reset);
 
 reset();
+
 requestAnimationFrame(animate);
 ```
