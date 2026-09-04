@@ -1,34 +1,48 @@
 ```css
 body {
     margin: 0;
-    background: #111;
-    color: white;
+    background: #f2f2f2;
+    color: #222;
     font-family: Arial, sans-serif;
     text-align: center;
 }
 
 h1 {
-    margin: 15px;
+    margin: 20px 0 10px;
 }
 
 canvas {
     display: block;
-    margin: auto;
-    background: #000;
-    border: 1px solid #444;
+    width: 800px;
+    max-width: 95%;
+    height: auto;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #ccc;
 }
 
 .controls {
     margin: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
 input {
     width: 70px;
-    margin-right: 15px;
+    padding: 5px;
 }
 
 button {
     padding: 6px 15px;
+    border: 1px solid #aaa;
+    background: white;
     cursor: pointer;
+}
+
+button:hover {
+    background: #e8e8e8;
 }
 ```
