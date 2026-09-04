@@ -1,71 +1,79 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 1000;
+canvas.width = 800;
 canvas.height = 600;
 
 const gravity = 9.81;
 
-const length1 = 120;
-const length2 = 120;
-
 const mass1 = 1;
 const mass2 = 1;
 
-// Tốc độ mô phỏng
+const length1 = 150;
+const length2 = 150;
+
+// Tăng tốc mô phỏng
 const SIMULATION_SPEED = 4;
 
-// Hai con lắc kép
-const pendulums = [
-    {
-        angle1: 120 * Math.PI / 180,
-        angle2: 60 * Math.PI / 180,
-        velocity1: 0,
-        velocity2: 0,
-        trail: [],
-        color: "#ff4444"
-    },
+// Hai con lắc
+const pendulum1 = {
+    angle1: 0,
+    angle2: 0,
+    velocity1: 0,
+    velocity2: 0,
+    trail: []
+};
 
-    {
-        angle1: 120 * Math.PI / 180 + 0.000001,
-        angle2: 60 * Math.PI / 180,
-        velocity1: 0,
-        velocity2: 0,
-        trail: [],
-        color: "#44aaff"
-    }
-];
+const pendulum2 = {
+    angle1: 0,
+    angle2: 0,
+    velocity1: 0,
+    velocity2: 0,
+    trail: []
+};
 
-const MAX_TRAIL = 1000;
+const MAX_TRAIL = 3000;
 
 
-// ================================
-// Reset
-// ================================
+// =========================
+// RESET
+// =========================
 
 function reset() {
-    const a1 = Number(document.getElementById("angle1").value);
-    const a2 = Number(document.getElementById("angle2").value);
 
-    pendulums[0].angle1 = a1 * Math.PI / 180;
-    pendulums[0].angle2 = a2 * Math.PI / 180;
+    pendulum1.angle1 =
+        Number(document.getElementById("angle1a").value)
+        * Math.PI / 180;
 
-    pendulums[1].angle1 = (a1 + 0.000001) * Math.PI / 180;
-    pendulums[1].angle2 = a2 * Math.PI / 180;
+    pendulum1.angle2 =
+        Number(document.getElementById("angle2a").value)
+        * Math.PI / 180;
 
-    for (const p of pendulums) {
-        p.velocity1 = 0;
-        p.velocity2 = 0;
-        p.trail.length = 0;
-    }
+    pendulum2.angle1 =
+        Number(document.getElementById("angle1b").value)
+        * Math.PI / 180;
+
+    pendulum2.angle2 =
+        Number(document.getElementById("angle2b").value)
+        * Math.PI / 180;
+
+    pendulum1.velocity1 = 0;
+    pendulum1.velocity2 = 0;
+
+    pendulum2.velocity1 = 0;
+    pendulum2.velocity2 = 0;
+
+    pendulum1.trail.length = 0;
+    pendulum2.trail.length = 0;
 }
 
 
-// ================================
-// Vật lý
-// ================================
+// =========================
+// PHYSICS
+// =========================
 
 function calculatePhysics(p, dt) {
+
     const difference = p.angle1 - p.angle2;
 
     const denominator =
@@ -101,18 +109,19 @@ function calculatePhysics(p, dt) {
     const acceleration2 =
         (
             2 *
-            Math.sin(difference)
-            *
+            Math.sin(difference) *
             (
                 p.velocity1 * p.velocity1 *
                 length1 *
                 (mass1 + mass2)
 
-                + gravity *
+                +
+                gravity *
                 (mass1 + mass2) *
                 Math.cos(p.angle1)
 
-                + p.velocity2 * p.velocity2 *
+                +
+                p.velocity2 * p.velocity2 *
                 length2 *
                 mass2 *
                 Math.cos(difference)
@@ -130,46 +139,33 @@ function calculatePhysics(p, dt) {
 }
 
 
-// ================================
-// Vẽ quả
-// ================================
+// =========================
+// DRAW ONE PENDULUM
+// =========================
 
-function drawCircle(x, y, radius, color) {
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-}
+function drawPendulum(p, color) {
 
+    const originX = canvas.width / 2;
+    const originY = 100;
 
-// ================================
-// Vẽ một con lắc kép
-// ================================
-
-function drawPendulum(p, originX, originY) {
     const x1 =
         originX +
-        length1 *
-        Math.sin(p.angle1);
+        length1 * Math.sin(p.angle1);
 
     const y1 =
         originY +
-        length1 *
-        Math.cos(p.angle1);
-
+        length1 * Math.cos(p.angle1);
 
     const x2 =
         x1 +
-        length2 *
-        Math.sin(p.angle2);
+        length2 * Math.sin(p.angle2);
 
     const y2 =
         y1 +
-        length2 *
-        Math.cos(p.angle2);
+        length2 * Math.cos(p.angle2);
 
 
-    // Quỹ đạo
+    // Trail
     p.trail.push({
         x: x2,
         y: y2
@@ -180,19 +176,25 @@ function drawPendulum(p, originX, originY) {
     }
 
 
+    // Vẽ trail
     ctx.beginPath();
 
     for (let i = 0; i < p.trail.length; i++) {
-        const point = p.trail[i];
 
         if (i === 0) {
-            ctx.moveTo(point.x, point.y);
+            ctx.moveTo(
+                p.trail[i].x,
+                p.trail[i].y
+            );
         } else {
-            ctx.lineTo(point.x, point.y);
+            ctx.lineTo(
+                p.trail[i].x,
+                p.trail[i].y
+            );
         }
     }
 
-    ctx.strokeStyle = p.color;
+    ctx.strokeStyle = color;
     ctx.globalAlpha = 0.35;
     ctx.lineWidth = 1;
     ctx.stroke();
@@ -207,44 +209,60 @@ function drawPendulum(p, originX, originY) {
     ctx.lineTo(x1, y1);
     ctx.lineTo(x2, y2);
 
-    ctx.strokeStyle = p.color;
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
     ctx.stroke();
 
 
     // Điểm treo
-    drawCircle(
+    ctx.beginPath();
+    ctx.arc(
         originX,
         originY,
         7,
-        "#ffffff"
+        0,
+        Math.PI * 2
     );
+
+    ctx.fillStyle = color;
+    ctx.fill();
 
 
     // Quả 1
-    drawCircle(
+    ctx.beginPath();
+    ctx.arc(
         x1,
         y1,
         15,
-        p.color
+        0,
+        Math.PI * 2
     );
+
+    ctx.fillStyle = color;
+    ctx.fill();
 
 
     // Quả 2
-    drawCircle(
+    ctx.beginPath();
+    ctx.arc(
         x2,
         y2,
-        19,
-        p.color
+        20,
+        0,
+        Math.PI * 2
     );
+
+    ctx.fillStyle = color;
+    ctx.fill();
 }
 
 
-// ================================
-// Vẽ toàn bộ
-// ================================
+// =========================
+// DRAW
+// =========================
 
 function draw() {
+
     ctx.clearRect(
         0,
         0,
@@ -252,49 +270,28 @@ function draw() {
         canvas.height
     );
 
-
-    // Con lắc đỏ
+    // Vẽ con lắc 1 trước
     drawPendulum(
-        pendulums[0],
-        280,
-        100
+        pendulum1,
+        "#ff4444"
     );
 
-
-    // Con lắc xanh
+    // Con lắc 2 đè chính xác lên nó
     drawPendulum(
-        pendulums[1],
-        720,
-        100
-    );
-
-
-    // Chữ
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
-
-    ctx.fillText(
-        "Con lắc A",
-        280,
-        40
-    );
-
-    ctx.fillText(
-        "Con lắc B",
-        720,
-        40
+        pendulum2,
+        "#44aaff"
     );
 }
 
 
-// ================================
-// Animation
-// ================================
+// =========================
+// ANIMATION
+// =========================
 
 let lastTime = performance.now();
 
 function animate(currentTime) {
+
     let dt =
         (currentTime - lastTime) / 1000;
 
@@ -302,20 +299,23 @@ function animate(currentTime) {
 
     dt = Math.min(dt, 0.02);
 
-    // Chạy nhanh hơn
-    dt *= SIMULATION_SPEED;
+    // Chia thành nhiều bước nhỏ để vật lý ổn định
+    const subSteps = 4;
+    const step =
+        (dt * SIMULATION_SPEED) / subSteps;
 
+    for (let i = 0; i < subSteps; i++) {
 
-    // Chia nhỏ bước để vật lý ổn định
-    const substeps = 4;
-    const subDt = dt / substeps;
+        calculatePhysics(
+            pendulum1,
+            step
+        );
 
-    for (let i = 0; i < substeps; i++) {
-        for (const p of pendulums) {
-            calculatePhysics(p, subDt);
-        }
+        calculatePhysics(
+            pendulum2,
+            step
+        );
     }
-
 
     draw();
 
@@ -323,23 +323,19 @@ function animate(currentTime) {
 }
 
 
-// ================================
-// Nút Reset
-// ================================
+// =========================
+// BUTTON
+// =========================
 
 document
     .getElementById("reset")
-    .addEventListener(
-        "click",
-        reset
-    );
+    .addEventListener("click", reset);
 
 
-// ================================
-// Khởi động
-// ================================
+// =========================
+// START
+// =========================
 
 reset();
 draw();
-
 requestAnimationFrame(animate);
