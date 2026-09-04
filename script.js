@@ -1,160 +1,129 @@
 ```javascript
-// ================================
-// DOUBLE PENDULUM
-// ================================
-
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-
-
-// ----------------
-// Canvas
-// ----------------
 
 canvas.width = 800;
 canvas.height = 600;
 
+// ======================
+// VẬT LÝ
+// ======================
 
-// ----------------
-// Vật lý
-// ----------------
+const g = 9.81;
 
-const gravity = 9.81;
+const m1 = 1;
+const m2 = 1;
 
-const mass1 = 1;
-const mass2 = 1;
+const L1 = 150;
+const L2 = 150;
 
-const length1 = 150;
-const length2 = 150;
+// Góc ban đầu
+let a1 = 120 * Math.PI / 180;
+let a2 = 120 * Math.PI / 180;
 
-
-// ----------------
-// Trạng thái
-// ----------------
-
-let angle1 = 0;
-let angle2 = 0;
-
-let velocity1 = 0;
-let velocity2 = 0;
+// Vận tốc góc
+let v1 = 0;
+let v2 = 0;
 
 
-// ----------------
-// Quỹ đạo
-// ----------------
-
-const trail = [];
-
-const MAX_TRAIL = 1500;
-
-
-// ----------------
-// Reset
-// ----------------
+// ======================
+// RESET
+// ======================
 
 function reset() {
+    a1 =
+        Number(document.getElementById("angle1").value)
+        * Math.PI / 180;
 
-    const input1 = document.getElementById("angle1");
-    const input2 = document.getElementById("angle2");
+    a2 =
+        Number(document.getElementById("angle2").value)
+        * Math.PI / 180;
 
-    angle1 = Number(input1.value) * Math.PI / 180;
-    angle2 = Number(input2.value) * Math.PI / 180;
-
-    velocity1 = 0;
-    velocity2 = 0;
+    v1 = 0;
+    v2 = 0;
 
     trail.length = 0;
 }
 
 
-// ----------------
-// Tính gia tốc
-// ----------------
+// ======================
+// QUỸ ĐẠO
+// ======================
 
-function calculatePhysics(dt) {
+const trail = [];
+const maxTrail = 1000;
 
-    const difference = angle1 - angle2;
+
+// ======================
+// PHƯƠNG TRÌNH CON LẮC
+// ======================
+
+function physics(dt) {
+
+    const sin1 = Math.sin(a1);
+    const sin2 = Math.sin(a2);
+
+    const cos1 = Math.cos(a1);
+    const cos2 = Math.cos(a2);
+
+    const difference = a1 - a2;
+
+    const sinDiff = Math.sin(difference);
+    const cosDiff = Math.cos(difference);
 
     const denominator =
-        2 * mass1 +
-        mass2 -
-        mass2 * Math.cos(2 * difference);
+        2 * m1 +
+        m2 -
+        m2 * Math.cos(2 * difference);
 
 
-    // Gia tốc thanh 1
+    // Gia tốc góc 1
 
-    const acceleration1 =
+    const acc1 =
         (
-            -gravity *
-            (2 * mass1 + mass2) *
-            Math.sin(angle1)
-
-            - mass2 *
-            gravity *
-            Math.sin(angle1 - 2 * angle2)
-
-            - 2 *
-            Math.sin(difference) *
-            mass2 *
+            -g * (2 * m1 + m2) * sin1
+            -m2 * g * Math.sin(a1 - 2 * a2)
+            -2 * sinDiff * m2 *
             (
-                velocity2 * velocity2 * length2
-
-                + velocity1 * velocity1 *
-                length1 *
-                Math.cos(difference)
-            )
-
-        )
-        /
-        (
-            length1 * denominator
-        );
-
-
-    // Gia tốc thanh 2
-
-    const acceleration2 =
-        (
-            2 *
-            Math.sin(difference)
-            *
-            (
-                velocity1 * velocity1 *
-                length1 *
-                (mass1 + mass2)
-
-                + gravity *
-                (mass1 + mass2) *
-                Math.cos(angle1)
-
-                + velocity2 * velocity2 *
-                length2 *
-                mass2 *
-                Math.cos(difference)
+                v2 * v2 * L2
+                + v1 * v1 * L1 * cosDiff
             )
         )
         /
+        (L1 * denominator);
+
+
+    // Gia tốc góc 2
+
+    const acc2 =
         (
-            length2 * denominator
-        );
+            2 * sinDiff *
+            (
+                v1 * v1 * L1 * (m1 + m2)
+                +g * (m1 + m2) * cos1
+                +v2 * v2 * L2 * m2 * cosDiff
+            )
+        )
+        /
+        (L2 * denominator);
 
 
     // Cập nhật vận tốc
 
-    velocity1 += acceleration1 * dt;
-    velocity2 += acceleration2 * dt;
+    v1 += acc1 * dt;
+    v2 += acc2 * dt;
 
 
     // Cập nhật góc
 
-    angle1 += velocity1 * dt;
-    angle2 += velocity2 * dt;
+    a1 += v1 * dt;
+    a2 += v2 * dt;
 }
 
 
-// ----------------
-// Vẽ
-// ----------------
+// ======================
+// VẼ
+// ======================
 
 function draw() {
 
@@ -165,77 +134,70 @@ function draw() {
         canvas.height
     );
 
-
-    // Điểm treo
-
-    const originX = canvas.width / 2;
+    const originX = 400;
     const originY = 100;
 
 
-    // Quả thứ nhất
+    // Quả 1
 
     const x1 =
         originX +
-        length1 *
-        Math.sin(angle1);
+        L1 * Math.sin(a1);
 
     const y1 =
         originY +
-        length1 *
-        Math.cos(angle1);
+        L1 * Math.cos(a1);
 
 
-    // Quả thứ hai
+    // Quả 2
 
     const x2 =
         x1 +
-        length2 *
-        Math.sin(angle2);
+        L2 * Math.sin(a2);
 
     const y2 =
         y1 +
-        length2 *
-        Math.cos(angle2);
+        L2 * Math.cos(a2);
 
 
-    // ----------------
-    // Quỹ đạo
-    // ----------------
+    // ======================
+    // QUỸ ĐẠO
+    // ======================
 
     trail.push({
         x: x2,
         y: y2
     });
 
-
-    if (trail.length > MAX_TRAIL) {
+    if (trail.length > maxTrail) {
         trail.shift();
     }
-
 
     ctx.beginPath();
 
     for (let i = 0; i < trail.length; i++) {
 
-        const point = trail[i];
-
         if (i === 0) {
-            ctx.moveTo(point.x, point.y);
-        }
-        else {
-            ctx.lineTo(point.x, point.y);
+            ctx.moveTo(
+                trail[i].x,
+                trail[i].y
+            );
+        } else {
+            ctx.lineTo(
+                trail[i].x,
+                trail[i].y
+            );
         }
     }
 
     ctx.strokeStyle = "#999";
     ctx.lineWidth = 1;
-
     ctx.stroke();
 
 
-    // ----------------
-    // Hai thanh
-    // ----------------
+    // ======================
+    // THANH
+    // ======================
 
     ctx.beginPath();
 
@@ -255,53 +217,53 @@ function draw() {
     );
 
     ctx.strokeStyle = "#222";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
 
     ctx.stroke();
 
 
-    // ----------------
-    // Điểm treo
-    // ----------------
+    // ======================
+    // ĐIỂM TREO
+    // ======================
 
-    drawCircle(
+    circle(
         originX,
         originY,
-        7,
+        8,
         "#222"
     );
 
 
-    // ----------------
-    // Quả 1
-    // ----------------
+    // ======================
+    // QUẢ 1
+    // ======================
 
-    drawCircle(
+    circle(
         x1,
         y1,
-        15,
+        16,
         "#555"
     );
 
 
-    // ----------------
-    // Quả 2
-    // ----------------
+    // ======================
+    // QUẢ 2
+    // ======================
 
-    drawCircle(
+    circle(
         x2,
         y2,
-        18,
+        20,
         "#111"
     );
 }
 
 
-// ----------------
-// Vẽ hình tròn
-// ----------------
+// ======================
+// VẼ HÌNH TRÒN
+// ======================
 
-function drawCircle(x, y, radius, color) {
+function circle(x, y, radius, color) {
 
     ctx.beginPath();
 
@@ -314,49 +276,36 @@ function drawCircle(x, y, radius, color) {
     );
 
     ctx.fillStyle = color;
-
     ctx.fill();
 }
 
 
-// ----------------
-// Game loop
-// ----------------
+// ======================
+// GAME LOOP
+// ======================
 
-let lastTime = performance.now();
+let previousTime = performance.now();
 
-function animate(currentTime) {
+function animate(time) {
 
     let dt =
-        (currentTime - lastTime)
-        / 1000;
+        (time - previousTime) / 1000;
 
-    lastTime = currentTime;
+    previousTime = time;
 
+    // Không để game bị nhảy quá xa khi lag
+    dt = Math.min(dt, 0.02);
 
-    // Không cho dt quá lớn
-    // khi tab bị lag
-
-    dt = Math.min(
-        dt,
-        0.02
-    );
-
-
-    calculatePhysics(dt);
-
+    physics(dt);
     draw();
 
-
-    requestAnimationFrame(
-        animate
-    );
+    requestAnimationFrame(animate);
 }
 
 
-// ----------------
-// Nút Reset
-// ----------------
+// ======================
+// RESET BUTTON
+// ======================
 
 document
     .getElementById("reset")
@@ -366,13 +315,11 @@ document
     );
 
 
-// ----------------
-// Khởi động
-// ----------------
+// ======================
+// START
+// ======================
 
 reset();
 
-requestAnimationFrame(
-    animate
-);
+requestAnimationFrame(animate);
 ```
