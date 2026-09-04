@@ -1,32 +1,39 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Test</title>
-
-    <style>
-        body {
-            background: white;
-            color: black;
-            text-align: center;
-            font-family: Arial;
-        }
-
-        canvas {
-            background: red;
-            border: 2px solid black;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Double Pendulum</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>Double Pendulum TEST</h1>
+    <h1>Double Pendulum</h1>
 
-<canvas id="canvas" width="800" height="600"></canvas>
+    <canvas id="canvas"></canvas>
 
-<p>Góc 1: 120° &nbsp;&nbsp; Góc 2: 120°</p>
+    <div class="controls">
 
-<button>Reset</button>
+        <label>
+            Góc 1:
+            <input id="angle1" type="number" value="120" step="0.1">
+            °
+        </label>
+
+        <label>
+            Góc 2:
+            <input id="angle2" type="number" value="120" step="0.1">
+            °
+        </label>
+
+        <button id="reset">Reset</button>
+
+    </div>
+
+    <script src="script.js"></script>
 
 </body>
 </html>
+```
