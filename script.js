@@ -176,8 +176,6 @@ function animate(time) {
 document
     .getElementById("reset")
     .addEventListener("click", reset);
-
 reset();
 
 requestAnimationFrame(animate);
-```
