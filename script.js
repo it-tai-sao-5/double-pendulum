@@ -1,105 +1,717 @@
-body {
-    margin: 0;
-    padding: 20px;
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-    background: #eeeeee;
 
-    font-family: Arial, sans-serif;
+// =====================================================
+// CANVAS
+// =====================================================
 
-    text-align: center;
+canvas.width = 800;
+canvas.height = 600;
+
+
+// =====================================================
+// PHYSICS
+// =====================================================
+
+const gravity = 9.81;
+
+const mass1 = 1;
+const mass2 = 1;
+
+const length1 = 150;
+const length2 = 150;
+
+
+// Tốc độ mô phỏng
+const SIMULATION_SPEED = 4;
+
+
+// Số bước vật lý mỗi frame
+const SUB_STEPS = 4;
+
+
+// Trail
+const MAX_TRAIL = 3000;
+
+
+// =====================================================
+// PENDULUM 1
+// =====================================================
+
+const pendulum1 = {
+
+    angle1: 0,
+    angle2: 0,
+
+    velocity1: 0,
+    velocity2: 0,
+
+    trail: []
+};
+
+
+// =====================================================
+// PENDULUM 2
+// =====================================================
+
+const pendulum2 = {
+
+    angle1: 0,
+    angle2: 0,
+
+    velocity1: 0,
+    velocity2: 0,
+
+    trail: []
+};
+
+
+// =====================================================
+// RESET
+// =====================================================
+
+function reset() {
+
+    pendulum1.angle1 =
+        Number(
+            document.getElementById("angle1a").value
+        ) * Math.PI / 180;
+
+    pendulum1.angle2 =
+        Number(
+            document.getElementById("angle2a").value
+        ) * Math.PI / 180;
+
+
+    pendulum2.angle1 =
+        Number(
+            document.getElementById("angle1b").value
+        ) * Math.PI / 180;
+
+    pendulum2.angle2 =
+        Number(
+            document.getElementById("angle2b").value
+        ) * Math.PI / 180;
+
+
+    pendulum1.velocity1 = 0;
+    pendulum1.velocity2 = 0;
+
+    pendulum2.velocity1 = 0;
+    pendulum2.velocity2 = 0;
+
+
+    pendulum1.trail.length = 0;
+    pendulum2.trail.length = 0;
 }
 
 
-h1 {
-    margin-bottom: 15px;
+// =====================================================
+// PHYSICS CALCULATION
+// =====================================================
+
+function calculatePhysics(p, dt) {
+
+    const difference =
+        p.angle1 - p.angle2;
+
+
+    const denominator =
+        2 * mass1 +
+        mass2 -
+        mass2 *
+        Math.cos(2 * difference);
+
+
+    const acceleration1 =
+
+        (
+            -gravity *
+            (2 * mass1 + mass2) *
+            Math.sin(p.angle1)
+
+            -
+
+            mass2 *
+            gravity *
+            Math.sin(
+                p.angle1 - 2 * p.angle2
+            )
+
+            -
+
+            2 *
+            Math.sin(difference) *
+            mass2 *
+            (
+                p.velocity2 *
+                p.velocity2 *
+                length2
+
+                +
+
+                p.velocity1 *
+                p.velocity1 *
+                length1 *
+                Math.cos(difference)
+            )
+        )
+
+        /
+
+        (
+            length1 *
+            denominator
+        );
+
+
+    const acceleration2 =
+
+        (
+            2 *
+            Math.sin(difference) *
+            (
+                p.velocity1 *
+                p.velocity1 *
+                length1 *
+                (mass1 + mass2)
+
+                +
+
+                gravity *
+                (mass1 + mass2) *
+                Math.cos(p.angle1)
+
+                +
+
+                p.velocity2 *
+                p.velocity2 *
+                length2 *
+                mass2 *
+                Math.cos(difference)
+            )
+        )
+
+        /
+
+        (
+            length2 *
+            denominator
+        );
+
+
+    p.velocity1 +=
+        acceleration1 * dt;
+
+    p.velocity2 +=
+        acceleration2 * dt;
+
+
+    p.angle1 +=
+        p.velocity1 * dt;
+
+    p.angle2 +=
+        p.velocity2 * dt;
 }
 
 
-canvas {
-    display: block;
+// =====================================================
+// DRAW ONE PENDULUM
+// =====================================================
 
-    width: 800px;
-    height: 600px;
+function drawPendulum(p, color) {
 
-    max-width: 95%;
+    const originX =
+        canvas.width / 2;
 
-    margin: auto;
+    const originY = 100;
 
-    background: black;
 
-    border-radius: 8px;
+    // -----------------------------
+    // Position bob 1
+    // -----------------------------
+
+    const x1 =
+        originX +
+        length1 *
+        Math.sin(p.angle1);
+
+    const y1 =
+        originY +
+        length1 *
+        Math.cos(p.angle1);
+
+
+    // -----------------------------
+    // Position bob 2
+    // -----------------------------
+
+    const x2 =
+        x1 +
+        length2 *
+        Math.sin(p.angle2);
+
+    const y2 =
+        y1 +
+        length2 *
+        Math.cos(p.angle2);
+
+
+    // -----------------------------
+    // Trail
+    // -----------------------------
+
+    p.trail.push({
+        x: x2,
+        y: y2
+    });
+
+
+    if (p.trail.length > MAX_TRAIL) {
+
+        p.trail.shift();
+    }
+
+
+    ctx.beginPath();
+
+
+    for (
+        let i = 0;
+        i < p.trail.length;
+        i++
+    ) {
+
+        if (i === 0) {
+
+            ctx.moveTo(
+                p.trail[i].x,
+                p.trail[i].y
+            );
+
+        } else {
+
+            ctx.lineTo(
+                p.trail[i].x,
+                p.trail[i].y
+            );
+        }
+    }
+
+
+    ctx.strokeStyle = color;
+
+    ctx.globalAlpha = 0.35;
+
+    ctx.lineWidth = 1;
+
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+
+
+    // -----------------------------
+    // Rods
+    // -----------------------------
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        originX,
+        originY
+    );
+
+    ctx.lineTo(
+        x1,
+        y1
+    );
+
+    ctx.lineTo(
+        x2,
+        y2
+    );
+
+
+    ctx.strokeStyle = color;
+
+    ctx.lineWidth = 4;
+
+    ctx.stroke();
+
+
+    // -----------------------------
+    // Pivot
+    // -----------------------------
+
+    ctx.beginPath();
+
+    ctx.arc(
+        originX,
+        originY,
+        7,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fillStyle = color;
+
+    ctx.fill();
+
+
+    // -----------------------------
+    // Bob 1
+    // -----------------------------
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x1,
+        y1,
+        15,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fillStyle = color;
+
+    ctx.fill();
+
+
+    // -----------------------------
+    // Bob 2
+    // -----------------------------
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x2,
+        y2,
+        20,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fillStyle = color;
+
+    ctx.fill();
 }
 
 
-.controls {
-    width: 800px;
-    max-width: 95%;
+// =====================================================
+// DRAW
+// =====================================================
 
-    margin: 20px auto 10px;
+function draw() {
 
-    display: grid;
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-    grid-template-columns: 1fr 1fr;
 
-    gap: 40px;
+    // Con lắc 1
+    drawPendulum(
+        pendulum1,
+        "#ff4444"
+    );
+
+
+    // Con lắc 2
+    // nằm đè lên con lắc 1
+    drawPendulum(
+        pendulum2,
+        "#44aaff"
+    );
 }
 
 
-.pendulum-control {
-    text-align: center;
+// =====================================================
+// ANIMATION
+// =====================================================
+
+let lastTime =
+    performance.now();
+
+
+function animate(currentTime) {
+
+    let dt =
+        (currentTime - lastTime) / 1000;
+
+
+    lastTime =
+        currentTime;
+
+
+    // Không cho dt nhảy quá lớn
+    dt =
+        Math.min(dt, 0.02);
+
+
+    const step =
+        (
+            dt *
+            SIMULATION_SPEED
+        ) / SUB_STEPS;
+
+
+    // Chạy nhiều physics step
+    for (
+        let i = 0;
+        i < SUB_STEPS;
+        i++
+    ) {
+
+        calculatePhysics(
+            pendulum1,
+            step
+        );
+
+        calculatePhysics(
+            pendulum2,
+            step
+        );
+    }
+
+
+    draw();
+
+
+    requestAnimationFrame(
+        animate
+    );
 }
 
 
-.pendulum-control h2 {
-    margin: 0 0 12px;
-}
+// =====================================================
+// RESET BUTTON
+// =====================================================
+
+document
+    .getElementById("reset")
+    .addEventListener(
+        "click",
+        () => {
+
+            reset();
+        }
+    );
 
 
-label {
-    display: block;
+// =====================================================
+// VIDEO RECORDING
+// =====================================================
 
-    margin: 10px;
+let mediaRecorder = null;
 
-    font-size: 18px;
-}
+let recordedChunks = [];
 
-
-input {
-    width: 130px;
-
-    padding: 6px;
-
-    font-size: 16px;
-}
+let isRecording = false;
 
 
-.buttons {
-    margin-top: 15px;
-}
+const recordButton =
+    document.getElementById("record");
+
+const recordStatus =
+    document.getElementById("recordStatus");
 
 
-button {
-    margin: 5px;
-
-    padding: 9px 20px;
-
-    font-size: 16px;
-
-    cursor: pointer;
-
-    border: none;
-
-    border-radius: 6px;
-}
+recordButton.addEventListener(
+    "click",
+    () => {
 
 
-button:hover {
-    filter: brightness(0.9);
-}
+        // ---------------------------------------------
+        // START RECORDING
+        // ---------------------------------------------
+
+        if (!isRecording) {
+
+            recordedChunks = [];
 
 
-#recordStatus {
-    min-height: 20px;
+            // Lấy hình ảnh canvas ở 60 FPS
+            const stream =
+                canvas.captureStream(60);
 
-    font-size: 15px;
-}
+
+            let options = {};
+
+
+            // Ưu tiên VP9
+            if (
+                MediaRecorder.isTypeSupported(
+                    "video/webm;codecs=vp9"
+                )
+            ) {
+
+                options.mimeType =
+                    "video/webm;codecs=vp9";
+
+
+            } else if (
+                MediaRecorder.isTypeSupported(
+                    "video/webm;codecs=vp8"
+                )
+            ) {
+
+                options.mimeType =
+                    "video/webm;codecs=vp8";
+
+
+            } else {
+
+                options.mimeType =
+                    "video/webm";
+            }
+
+
+            mediaRecorder =
+                new MediaRecorder(
+                    stream,
+                    options
+                );
+
+
+            // -----------------------------------------
+            // DATA
+            // -----------------------------------------
+
+            mediaRecorder.ondataavailable =
+                (event) => {
+
+                    if (
+                        event.data &&
+                        event.data.size > 0
+                    ) {
+
+                        recordedChunks.push(
+                            event.data
+                        );
+                    }
+                };
+
+
+            // -----------------------------------------
+            // STOP
+            // -----------------------------------------
+
+            mediaRecorder.onstop =
+                () => {
+
+                    const blob =
+                        new Blob(
+                            recordedChunks,
+                            {
+                                type:
+                                    "video/webm"
+                            }
+                        );
+
+
+                    const url =
+                        URL.createObjectURL(
+                            blob
+                        );
+
+
+                    const link =
+                        document.createElement(
+                            "a"
+                        );
+
+
+                    link.href = url;
+
+                    link.download =
+                        "double-pendulum.webm";
+
+
+                    document.body.appendChild(
+                        link
+                    );
+
+
+                    link.click();
+
+
+                    link.remove();
+
+
+                    setTimeout(
+                        () => {
+
+                            URL.revokeObjectURL(
+                                url
+                            );
+
+                        },
+                        1000
+                    );
+
+
+                    recordStatus.textContent =
+                        "Video đã xuất xong!";
+
+
+                    recordButton.textContent =
+                        "🎥 Xuất video";
+                };
+
+
+            // -----------------------------------------
+            // START
+            // -----------------------------------------
+
+            mediaRecorder.start(
+                1000
+            );
+
+
+            isRecording = true;
+
+
+            recordButton.textContent =
+                "⏹ Dừng & xuất video";
+
+
+            recordStatus.textContent =
+                "🔴 Đang quay...";
+        }
+
+
+        // ---------------------------------------------
+        // STOP RECORDING
+        // ---------------------------------------------
+
+        else {
+
+            mediaRecorder.stop();
+
+            isRecording = false;
+
+            recordStatus.textContent =
+                "Đang xử lý video...";
+        }
+
+    }
+);
+
+
+// =====================================================
+// START
+// =====================================================
+
+reset();
+
+draw();
+
+requestAnimationFrame(
+    animate
+);
