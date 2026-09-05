@@ -3,49 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Double Pendulum</title>
+
+    <title>Double Pendulum Chaos</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>Double Pendulum</h1>
+    <h1>Double Pendulum Chaos</h1>
 
     <canvas id="canvas"></canvas>
 
     <div class="controls">
 
+        <!-- CON LẮC 1 -->
         <div class="pendulum-control">
             <h2>Con lắc 1</h2>
 
             <label>
                 Góc 1:
-                <input id="angle1a" type="number" value="120" step="any">°
+                <input
+                    id="angle1a"
+                    type="number"
+                    value="120"
+                    step="any"
+                >
+                °
             </label>
 
             <label>
                 Góc 2:
-                <input id="angle2a" type="number" value="60" step="any">°
+                <input
+                    id="angle2a"
+                    type="number"
+                    value="60"
+                    step="any"
+                >
+                °
             </label>
         </div>
 
+
+        <!-- CON LẮC 2 -->
         <div class="pendulum-control">
             <h2>Con lắc 2</h2>
 
             <label>
                 Góc 1:
-                <input id="angle1b" type="number" value="120.000001" step="any">°
+                <input
+                    id="angle1b"
+                    type="number"
+                    value="120.000001"
+                    step="any"
+                >
+                °
             </label>
 
             <label>
                 Góc 2:
-                <input id="angle2b" type="number" value="60" step="any">°
+                <input
+                    id="angle2b"
+                    type="number"
+                    value="60"
+                    step="any"
+                >
+                °
             </label>
         </div>
 
     </div>
 
-    <button id="reset">Reset</button>
+
+    <div class="buttons">
+
+        <button id="reset">
+            Reset
+        </button>
+
+        <button id="record">
+            🎥 Xuất video
+        </button>
+
+    </div>
+
+
+    <p id="recordStatus"></p>
+
 
     <script src="script.js"></script>
 
